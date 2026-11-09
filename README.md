@@ -37,39 +37,46 @@
         const contenedor = document.getElementById('contenedor-galeria');
         const estado = document.getElementById('estado');
 
-        async function cargarGaleria() {
-            // Consulta de lista de archivos
-            const { data: archivos, error } = await supabaseClient.storage.from(bucketName).list();
+async function cargarGaleria() {
+    const { data: archivos, error } = await supabaseClient.storage.from(bucketName).list();
 
-            if (error) {
-                estado.innerText = "Error al conectar con Supabase.";
-                console.error(error);
-                return;
-            }
+    if (error) {
+        estado.innerText = "Error al conectar con Supabase.";
+        console.error(error);
+        return;
+    }
 
-            if (!archivos || archivos.length === 0) {
-                estado.innerText = "Aún no hay imágenes subidas.";
-                return;
-            }
+    if (!archivos || archivos.length === 0) {
+        estado.innerText = "Aún no hay imágenes subidas.";
+        return;
+    }
 
-            estado.style.display = "none";
+    estado.style.display = "none";
+    contenedor.innerHTML = ""; // Limpia el contenedor antes de renderizar
 
-            archivos.forEach(archivo => {
-                if (archivo.name === ".emptyFolderPlaceholder") return;
+    archivos.forEach(archivo => {
+        if (archivo.name === ".emptyFolderPlaceholder") return;
 
-                const { data } = supabaseClient.storage.from(bucketName).getPublicUrl(archivo.name);
+        // Comprobación de extensión .jpg o .jpeg
+        const nombreMinusculas = archivo.name.toLowerCase();
+        const esJpg = nombreMinusculas.endsWith('.jpg') || nombreMinusculas.endsWith('.jpeg');
 
-                const box = document.createElement('div');
-                box.className = 'imagen-box';
-                box.innerHTML = `
-                    <a href="${data.publicUrl}" target="_blank">
-                        <img src="${data.publicUrl}" alt="${archivo.name}">
-                    </a>
-                    <div class="nombre">${archivo.name}</div>
-                `;
-                contenedor.appendChild(box);
-            });
-        }
+        // Si no es un archivo JPG, se ignora
+        if (!esJpg) return;
+
+        const { data } = supabaseClient.storage.from(bucketName).getPublicUrl(archivo.name);
+
+        const box = document.createElement('div');
+        box.className = 'imagen-box';
+        box.innerHTML = `
+            <a href="${data.publicUrl}" target="_blank">
+                <img src="${data.publicUrl}" alt="${archivo.name}">
+            </a>
+            <div class="nombre">${archivo.name}</div>
+        `;
+        contenedor.appendChild(box);
+    });
+}
 
         cargarGaleria();
     </script>
